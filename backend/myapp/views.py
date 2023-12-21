@@ -8,7 +8,6 @@ from django.db import connection
 from django.views.decorators.http import require_http_methods
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from .demo import main
 
 def _remove_transparency(im, bg_colour=(255, 255, 255)):
 
@@ -30,11 +29,7 @@ def _remove_transparency(im, bg_colour=(255, 255, 255)):
 
 @require_http_methods(["GET"])
 def list_images(request):
-    files = []
-    for filename in os.listdir(f"{settings.MEDIA_ROOT}/places2_512_object/images"):
-        if filename.endswith(".png"):
-            files.append(filename)
-
+    
     return JsonResponse({"images": files})
 
 
@@ -52,33 +47,9 @@ def predict(request):
     im = im.convert("RGB")
     im.save(f"{settings.MEDIA_ROOT}/tmpMask.png")
 
-    main(
-        model_name='migan-256', 
-        model_path=f"{settings.MEDIA_ROOT}/models/migan_256_places2.pt", 
-        img_path=f"{settings.MEDIA_ROOT}/places2_512_object/images/{body['filename']}",
-        mask_path=f"{settings.MEDIA_ROOT}/tmpMask.png",
-        output_path=f"{settings.MEDIA_ROOT}",
-        invert=False,
-    )
-
-    # Note: Testing
-    # main(
-    #     model_name='migan-256', 
-    #     model_path=f"{settings.MEDIA_ROOT}/models/migan_256_places2.pt", 
-    #     img_path=f"{settings.MEDIA_ROOT}/places2_512_object/images/2.png",
-    #     mask_path=f"{settings.MEDIA_ROOT}/places2_512_object/masks/2.png",
-    #     output_path=f"{settings.MEDIA_ROOT}",
-    #     invert=True,
-    # )
-
     return JsonResponse({"result": "updated!"})
 
 
 @require_http_methods(["POST"])
 def cleanup_results(request):
-    dir_name = f"{settings.MEDIA_ROOT}"
-    for item in os.listdir(dir_name):
-        if item.endswith(".png"):
-            os.remove(os.path.join(dir_name, item))
-
     return JsonResponse({"result": "removed"})
