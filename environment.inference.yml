@@ -21,3 +21,6 @@ dependencies:
     - scikit-image==0.20.0
     - scipy==1.10.1
     - PyMuPDF==1.21.1
+    - Django==3.1.14
+    - psycopg2-binary==2.8.4  
+    - python-dotenv==0.12.0 

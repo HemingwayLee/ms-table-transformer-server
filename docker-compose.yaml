@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  mydb:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: dj
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: /home/app/scripts/init.sh
+    environment:
+      DJANGO_USER: root
+      DJANGO_PASS: rootroot
+      WEBADDRESS: 127.0.0.1
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pass
+      POSTGRES_HOST: mydb
+      POSTGRES_PORT: 5432
+      POSTGRES_DB_NAME: dj
+      PYTHONUNBUFFERED: 1
+    volumes:
+      - "./backend:/home/app/backend"
+      - "./frontend/src:/home/app/frontend/src"
+      - "./frontend/public:/home/app/frontend/public"
+      - "./scripts:/home/app/scripts"
+    ports:
+      - "8000:8000"
+      - "3000:3000"
+    depends_on:
+      - mydb
+
