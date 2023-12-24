@@ -877,14 +877,13 @@ def main():
                                    str_model_path=args.structure_model_path)
 
     # Load images
-    img_files = os.listdir(args.image_dir)
+    img_files = [args.image_dir]
     num_files = len(img_files)
     random.shuffle(img_files)
 
     for count, img_file in enumerate(img_files):
         print("({}/{})".format(count+1, num_files))
-        img_path = os.path.join(args.image_dir, img_file)
-        img = Image.open(img_path)
+        img = Image.open(img_file)
         print("Image loaded.")
 
         if not args.words_dir is None:
@@ -934,6 +933,7 @@ def main():
                 for key, val in extracted_table.items():
                     output_result(key, val, args, extracted_table['image'],
                                   img_file.replace('.jpg', '_{}.jpg'.format(table_idx)))
+
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,3 @@
-"""
-Copyright (C) 2021 Microsoft Corporation
-"""
 import os
 import argparse
 import json
@@ -370,6 +367,3 @@ def main():
         data_loader_test, dataset_test = get_data(args)
         eval_coco(args, model, criterion, postprocessors, data_loader_test, dataset_test, device)
 
-
-if __name__ == "__main__":
-    main()

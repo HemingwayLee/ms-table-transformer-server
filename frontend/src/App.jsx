@@ -7,7 +7,6 @@ import Paper from '@mui/material/Paper';
 import Cookies from 'js-cookie';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
-import CanvasDraw from "react-canvas-draw";
 
 export default function Dashboard() {
   const [fileList, setFileList] = React.useState([]);
@@ -16,35 +15,67 @@ export default function Dashboard() {
   const [isResultReady, setResultReady] = React.useState(false);
   const [res, setRes] = React.useState('');
   const canvasRef = React.useRef(null);
-  
-  const fetchResImage = async () => {
-    const res = await fetch(`media/${selectedImg}`);
-    const imageBlob = await res.blob();
-    const imageObjectURL = URL.createObjectURL(imageBlob);
-    setRes(imageObjectURL);
-    setResultReady(true);
-  };
 
+  const handleSelectedImage = async (filename) => {
+    setSelectedImg(filename);
+
+    var background = new Image();
+    background.src = `media/images/${filename}`;
+
+    background.onload = function() {
+      canvasRef.current.width = background.width;
+      canvasRef.current.height = background.height;
+      
+      const context = canvasRef.current.getContext('2d');
+      context.drawImage(background,0,0);   
+
+      doPrediction(filename);
+    }
+  }
+  
+  // const fetchResImage = async () => {
+  //   const res = await fetch(`media/results/${selectedImg}`);
+  //   const imageBlob = await res.blob();
+  //   const imageObjectURL = URL.createObjectURL(imageBlob);
+  //   setRes(imageObjectURL);
+  //   setResultReady(true);
+  // };
 
   React.useEffect(() => {
     getData();
   }, []);
 
-  const cleanup = () => {
-    fetch(`/api/clean/`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'X-CSRFToken': Cookies.get('csrftoken'),
-      }
-    })
-    .then(function(response) {
-      if (response.status === 200) {
-        console.log(response.json());
-      } else {
-        alert("backend errors")
-      }
-    });
+  // const cleanup = () => {
+  //   fetch(`/api/clean/`, {
+  //     method: 'POST',
+  //     headers: { 
+  //       'Content-Type': 'application/json',
+  //       'X-CSRFToken': Cookies.get('csrftoken'),
+  //     }
+  //   })
+  //   .then(function(response) {
+  //     if (response.status === 200) {
+  //       console.log(response.json());
+  //     } else {
+  //       alert("backend errors")
+  //     }
+  //   });
+  // }
+
+  const drawBboxes = (bboxes) => {
+    for (var i=0; i<bboxes.length; ++i) {
+      // console.log(bboxes[i]["bbox"]);
+      const context = canvasRef.current.getContext('2d');
+      context.strokeStyle = "red";
+      context.beginPath();
+      context.rect(
+        bboxes[i]["bbox"][0], 
+        bboxes[i]["bbox"][1], 
+        bboxes[i]["bbox"][2], 
+        bboxes[i]["bbox"][3]
+      );
+      context.stroke();
+    }
   }
 
   const getData = async () => {
@@ -61,7 +92,7 @@ export default function Dashboard() {
           }
         }));
         setSelectedIdx(0)
-        setSelectedImg((data.images.length > 0) ? data.images[0] : '' )
+        handleSelectedImage((data.images.length > 0) ? data.images[0] : '' )
       } else {
         throw new Error('Request failed')
       }
@@ -70,12 +101,10 @@ export default function Dashboard() {
     }
   }
 
-  const onCanvasChange = (e) => {
+  const doPrediction = (filename) => {
     // console.log(e);
     // console.log(e.getDataURL())
     // console.log(e.getSaveData());
-
-    const dataUrl = e.getDataURL()
 
     fetch(`/api/predict/`, {
       method: 'POST',
@@ -84,8 +113,7 @@ export default function Dashboard() {
         'X-CSRFToken': Cookies.get('csrftoken'),
       },
       body: JSON.stringify({
-        filename: selectedImg,
-        mask: dataUrl.split(',')[1]
+        filename: filename
       })
     })
     .then(function(response) {
@@ -96,19 +124,18 @@ export default function Dashboard() {
       }
     })
     .then(function(myJson) {
-      fetchResImage()
+      // fetchResImage()
       // getData();
-      // alert(myJson["result"]);
+      console.log(myJson["result"])
+      drawBboxes(myJson["result"]);
     });
   }
 
   const handleDropDownChange = (e) => {
-    cleanup();
-    canvasRef.current.clear();
-    
+    // cleanup();
     setResultReady(false);
     setSelectedIdx(e.target.value);
-    setSelectedImg(fileList.filter(x=>x.id == e.target.value)[0].img);
+    handleSelectedImage(fileList.filter(x=>x.id == e.target.value)[0].img);
   }
   
   return (
@@ -147,22 +174,20 @@ export default function Dashboard() {
                     <thead>
                       <tr>
                         <td>Original</td>
-                        <td>Result</td>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
                         <td>
-                          <CanvasDraw
+                          <canvas
                             ref={canvasRef} 
-                            imgSrc={`media/places2_512_object/images/${selectedImg}`} 
-                            hideGridX={true} 
-                            hideGridY={true}
-                            canvasWidth={330}
-                            canvasHeight={330}
-                            brushColor={"#000000"}
-                            onChange={onCanvasChange}/>
+                          />
                           </td>
+                      </tr>
+                      <tr>
+                        <td>Result</td>
+                      </tr>
+                      <tr>
                         <td>
                           {
                             isResultReady && (
