@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 from PIL import Image, ImageOps
 from io import BytesIO
+from django.core.files.storage import FileSystemStorage
 from django.http import JsonResponse
 from django.db import connection
 from django.views.decorators.http import require_http_methods
@@ -57,6 +58,18 @@ def predict(request):
             return JsonResponse({"result": "error!", "code": process.returncode})
     else:
         return JsonResponse({"result": "no filename!"})
+
+
+@require_http_methods(["POST"])
+def upload_file(request):
+    uploadedFile = request.FILES['myfile'] if 'myfile' in request.FILES else False
+    if uploadedFile:
+        fss = FileSystemStorage(f"{settings.MEDIA_ROOT}/images/")
+        filename = fss.save(uploadedFile.name, uploadedFile)
+        return JsonResponse({'result': 'uploaded'})
+    else:
+        return JsonResponse({'result': 'no file uploaded' }, status=400)
+
 
 
 @require_http_methods(["POST"])
