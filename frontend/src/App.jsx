@@ -10,6 +10,8 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 
 export default function Dashboard() {
+  const [isBtnDisabled, setBtnDisabled] = React.useState(false);
+  const [isDropDownDisabled, setDropDownDisabled] = React.useState(false);
   const [fileList, setFileList] = React.useState([]);
   const [selectedImg, setSelectedImg] = React.useState('');
   const [selectedIdx, setSelectedIdx] = React.useState(0);
@@ -106,6 +108,8 @@ export default function Dashboard() {
     // console.log(e);
     // console.log(e.getDataURL())
     // console.log(e.getSaveData());
+    setBtnDisabled(true);
+    setDropDownDisabled(true);
 
     fetch(`/api/predict/`, {
       method: 'POST',
@@ -118,6 +122,9 @@ export default function Dashboard() {
       })
     })
     .then(function(response) {
+      setBtnDisabled(false);
+      setDropDownDisabled(false);
+
       if (response.status === 200) {
         return response.json();
       } else {
@@ -197,6 +204,7 @@ export default function Dashboard() {
                     value={selectedIdx}
                     label="selectOption"
                     onChange={handleDropDownChange}
+                    disabled={isDropDownDisabled}
                   >
                     {
                       fileList.map(x => (
@@ -205,7 +213,7 @@ export default function Dashboard() {
                     }
                   </Select>
                   <hr />
-                  <Button variant="contained" component="label" onChange={handleImgLoad}>
+                  <Button variant="contained" component="label" onChange={handleImgLoad} disabled={isBtnDisabled}>
                     Load your file
                     <input type="file" accept=".jpg, .jpeg, .png, .bmp" hidden />
                   </Button>
